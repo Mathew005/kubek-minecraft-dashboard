@@ -7,7 +7,7 @@ const LOGGER = require("./logger");
 
 // Метод с API PaperMC
 exports.getPaperCoreURL = (core, version, cb) => {
-    let firstStepURL = "https://papermc.io/api/v2/projects/" + core + "/versions/" + version;
+    let firstStepURL = "https://api.papermc.io/v2/projects/" + core + "/versions/" + version;
     COMMONS.getDataByURL(firstStepURL, (data) => {
         if (data === false) {
             LOGGER.warning("Oops! An error occurred while fetching cores");
@@ -56,7 +56,7 @@ exports.getCoreByExternalURL = (url, version, cb) => {
 
 // Метод с API PaperMC
 exports.getAllPaperLikeCores = (cb, core = "paper") => {
-    COMMONS.getDataByURL("https://papermc.io/api/v2/projects/" + core, (data) => {
+    COMMONS.getDataByURL("https://api.papermc.io/v2/projects/" + core, (data) => {
         if (data === false) {
             LOGGER.warning("Oops! An error occurred while fetching cores");
             cb(false);
