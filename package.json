@@ -29,11 +29,13 @@
     "js-base64": "^3.7.7",
     "mime": "^3.0.0",
     "minecraft-server-properties": "^1.0.0",
+    "moment": "^2.30.1",
     "node-disk-info": "^1.3.0",
     "node-machine-id": "^1.1.12",
     "node-mcstatus": "^1.2.1",
     "os-utils": "^0.0.14",
     "swagger-autogen": "^2.23.7",
+    "tar": "^7.5.2",
     "tree-kill": "^1.2.2"
   }
 }

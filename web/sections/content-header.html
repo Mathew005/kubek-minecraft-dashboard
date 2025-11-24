@@ -34,6 +34,10 @@
                 onclick="KubekServers.restartServer(selectedServer)">
             <span class="material-symbols-rounded"> restart_alt </span>
         </button>
+        <button class="dark-btn icon-only" id="server-backup-btn"
+                onclick="KubekServers.askForBackup(selectedServer)">
+            <span class="material-symbols-rounded"> save </span>
+        </button>
         <button class="dark-btn icon-only" id="server-more-btn" onclick="KubekServerHeaderUI.generateDropdown(this)">
             <span class="material-symbols-rounded"> more_horiz </span>
         </button>
