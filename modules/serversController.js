@@ -289,6 +289,8 @@ exports.backupServer = (serverName) => {
         return false;
     }
 
+    let wasRunning = SERVERS_MANAGER.getServerStatus(serverName) === PREDEFINED.SERVER_STATUSES.RUNNING;
+
     const performBackup = () => {
         let spData = this.getServerProperties(serverName);
         let worldName = spData && spData["level-name"] ? spData["level-name"] : "world";
@@ -313,13 +315,17 @@ exports.backupServer = (serverName) => {
             [worldName]
         ).then(() => {
             this.writeServerLog(serverName, `[Backups] Backup completed: ${backupFile}`);
+            if (wasRunning) {
+                this.writeServerLog(serverName, "[Backups] Restarting server...");
+                this.startServer(serverName);
+            }
         }).catch((err) => {
             this.writeServerLog(serverName, `[Backups] Backup failed: ${err.message}`);
             console.error(err);
         });
     };
 
-    if (SERVERS_MANAGER.getServerStatus(serverName) === PREDEFINED.SERVER_STATUSES.RUNNING) {
+    if (wasRunning) {
         this.writeServerLog(serverName, "[Backups] Stopping server for backup...");
         this.stopServer(serverName);
 
