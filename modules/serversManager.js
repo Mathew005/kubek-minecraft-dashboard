@@ -51,7 +51,7 @@ exports.setServerStatus = (serverName, status) => {
 
 // Установить параметр в конфигурации сервера
 exports.setServerProperty = (serverName, property, value) => {
-    if (this.isServerExists(serverName) && COMMONS.isObjectsValid(property, value, serversConfig[serverName][property])) {
+    if (this.isServerExists(serverName) && COMMONS.isObjectsValid(property, value)) {
         serversConfig[serverName][property] = value;
         CONFIGURATION.writeServersConfig(serversConfig);
         return true;

@@ -12,6 +12,8 @@ $(function () {
     });
 
     $("#backup-time, #timezone").on("change", updateLocalTimeHint);
+
+    loadBackupsList();
 });
 
 function populateTimezones() {
@@ -20,6 +22,58 @@ function populateTimezones() {
     timezones.forEach(tz => {
         if (tz !== 'UTC') {
             select.append(new Option(tz, tz));
+        }
+    });
+}
+
+function loadBackupsList() {
+    KubekRequests.get("/servers/" + selectedServer + "/backups", (backups) => {
+        const tbody = $("#backups-table tbody");
+        tbody.empty();
+
+        if (Array.isArray(backups)) {
+            backups.forEach(backup => {
+                let sizeStr = (backup.size / 1024 / 1024).toFixed(2) + " MB";
+                let dateStr = new Date(backup.created).toLocaleString();
+
+                let row = `
+                    <tr>
+                        <td>${backup.filename}</td>
+                        <td>${backup.type === 'manual' ? '<span class="badge blue">Manual</span>' : '<span class="badge green">Auto</span>'}</td>
+                        <td>${dateStr}</td>
+                        <td>${sizeStr}</td>
+                        <td>
+                            <button class="primary-btn danger-btn-color" onclick="confirmRestore('${backup.filename}')">Restore</button>
+                        </td>
+                    </tr>
+                `;
+                tbody.append(row);
+            });
+        }
+    });
+}
+
+function confirmRestore(filename) {
+    // Popup 1
+    if (confirm("Are you sure you want to restore this backup? Current world data will be overwritten.")) {
+        // Popup 2
+        if (confirm("The server will be stopped and the current world folder DELETED. This cannot be undone.")) {
+            // Popup 3
+            if (confirm("Final Confirmation: Restore backup " + filename + " now?")) {
+                performRestore(filename);
+            }
+        }
+    }
+}
+
+function performRestore(filename) {
+    KubekAlerts.addAlert("Starting restore process...", "restore", "Info", 3000, "blue");
+
+    KubekRequests.post("/servers/" + selectedServer + "/backups/restore?filename=" + Base64.encode(filename), (res) => {
+        if (res === true) {
+            KubekAlerts.addAlert("Restore completed successfully!", "check_circle", "Success", 5000, "green");
+        } else {
+            KubekAlerts.addAlert("Restore failed. Check console/logs.", "error", "Error", 5000, "red");
         }
     });
 }

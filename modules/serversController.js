@@ -439,4 +439,91 @@ exports.initSchedulers = () => {
     });
 };
 
+// Получить список бэкапов
+exports.getBackupsList = (serverName) => {
+    let backupDir = path.resolve("./servers/" + serverName + "/backups");
+    if (!fs.existsSync(backupDir)) {
+        return [];
+    }
+
+    try {
+        let files = fs.readdirSync(backupDir);
+        let backups = [];
+
+        files.forEach(file => {
+            if (file.endsWith(".tar")) {
+                let stats = fs.statSync(path.join(backupDir, file));
+                backups.push({
+                    filename: file,
+                    size: stats.size,
+                    created: stats.mtime,
+                    type: file.startsWith("auto_backup_") ? "auto" : "manual"
+                });
+            }
+        });
+
+        // Sort by date (newest first)
+        return backups.sort((a, b) => new Date(b.created) - new Date(a.created));
+    } catch (e) {
+        console.error(e);
+        return [];
+    }
+};
+
+// Восстановить бэкап
+exports.restoreServer = (serverName, filename) => {
+    if (!SERVERS_MANAGER.isServerExists(serverName)) {
+        return false;
+    }
+
+    let backupPath = path.resolve("./servers/" + serverName + "/backups/" + filename);
+    if (!fs.existsSync(backupPath)) {
+        this.writeServerLog(serverName, `[Backups] Restore failed: File ${filename} not found.`);
+        return false;
+    }
+
+    const performRestore = () => {
+        let spData = this.getServerProperties(serverName);
+        let worldName = spData && spData["level-name"] ? spData["level-name"] : "world";
+        let worldPath = path.resolve("./servers/" + serverName + "/" + worldName);
+
+        this.writeServerLog(serverName, `[Backups] Starting restore from ${filename}...`);
+
+        // 1. Delete existing world
+        if (fs.existsSync(worldPath)) {
+            this.writeServerLog(serverName, `[Backups] Deleting existing world '${worldName}'...`);
+            fs.rmSync(worldPath, { recursive: true, force: true });
+        }
+
+        // 2. Untar backup
+        this.writeServerLog(serverName, `[Backups] Extracting backup...`);
+        tar.extract({
+            file: backupPath,
+            cwd: path.resolve("./servers/" + serverName)
+        }).then(() => {
+            this.writeServerLog(serverName, `[Backups] Restore completed successfully.`);
+        }).catch((err) => {
+            this.writeServerLog(serverName, `[Backups] Restore failed: ${err.message}`);
+            console.error(err);
+        });
+    };
+
+    // Check if running and stop if necessary
+    if (SERVERS_MANAGER.getServerStatus(serverName) === PREDEFINED.SERVER_STATUSES.RUNNING) {
+        this.writeServerLog(serverName, "[Backups] Stopping server for restore...");
+        this.stopServer(serverName);
+
+        let checkInterval = setInterval(() => {
+            if (SERVERS_MANAGER.getServerStatus(serverName) === PREDEFINED.SERVER_STATUSES.STOPPED) {
+                clearInterval(checkInterval);
+                performRestore();
+            }
+        }, 1000);
+    } else {
+        performRestore();
+    }
+
+    return true;
+};
+
 // DEVELOPED by seeeroy
