@@ -1,22 +1,16 @@
 const PREDEFINED = require("./predefined");
 
-// Определяем язык интерфейса для пользователя
+// Determine the user interface language
 const fs = require("fs");
 const axios = require("axios");
 const path = require("path");
 
 exports.detectUserLocale = () => {
-    let userLocale = Intl.DateTimeFormat()
-        .resolvedOptions()
-        .locale.toString()
-        .split("-")[0];
-    if (userLocale !== "ru" && userLocale !== "nl") {
-        userLocale = "en";
-    }
-    return userLocale.toLowerCase();
+    // Default to English as per requirements, ignoring user locale
+    return "en";
 };
 
-// Создать необходимые базовые папки
+// Create necessary base directories
 exports.makeBaseDirs = () => {
     PREDEFINED.BASE_DIRS.forEach(function (dir) {
         if (!fs.existsSync("./" + dir)) {
@@ -25,7 +19,7 @@ exports.makeBaseDirs = () => {
     });
 };
 
-// Проверить все объекты на !== undefined
+// Check all objects for !== undefined
 exports.isObjectsValid = (...objects) => {
     let validCount = 0;
     let summCount = objects.length;
@@ -37,7 +31,7 @@ exports.isObjectsValid = (...objects) => {
     return summCount === validCount;
 };
 
-// Получить данные по ссылке
+// Get data by URL
 exports.getDataByURL = (url, cb) => {
     axios
         .get(url)
@@ -50,7 +44,7 @@ exports.getDataByURL = (url, cb) => {
         });
 };
 
-// Функция для перемещения загруженного на сервер файла
+// Function to move uploaded file to server
 exports.moveUploadedFile = (server, sourceFile, filePath, cb) => {
     if (this.isObjectsValid(server, sourceFile.name)) {
         let uploadPath;
@@ -68,7 +62,7 @@ exports.moveUploadedFile = (server, sourceFile, filePath, cb) => {
     }
 }
 
-// Проверить текст на совпадения с массивом regexp`ов
+// Check text for matches with array of regexes
 exports.testForRegexArray = (text, regexArray) => {
     let testResult = false;
     regexArray.forEach((regexpItem) => {
