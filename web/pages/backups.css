@@ -1,0 +1,60 @@
+.backups-container {
+    width: 100%;
+}
+
+.backups-container h4 {
+    font-weight: 300;
+    margin-top: 12px;
+}
+
+.backups-container table {
+    width: 100%;
+    table-layout: fixed;
+    margin: 12px 0;
+}
+
+.backups-container table,
+.backups-container table tr,
+.backups-container table td {
+    background: var(--bg-dark-accent);
+}
+
+.backups-container table input,
+.backups-container table select {
+    background: var(--bg-dark);
+    width: 100%;
+    color: white;
+    border: none;
+    padding: 8px;
+    border-radius: 8px;
+}
+
+.backups-container tr td:first-child {
+    width: 40%;
+}
+
+.backups-container tr td .flexWrapper {
+    display: flex;
+    align-items: center;
+    justify-content: start;
+}
+
+.backups-container .iconBg {
+    background: var(--bg-dark);
+    width: 42px;
+    height: 42px;
+    border-radius: 9999px !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 12px;
+}
+
+.backups-container .iconBg * {
+    font-size: 24px;
+}
+
+.backups-container .primary-btn {
+    width: 100%;
+    margin-top: 24px;
+}
