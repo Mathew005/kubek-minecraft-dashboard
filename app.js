@@ -15,6 +15,7 @@ const MULTI_LANGUAGE = require("./modules/multiLanguage");
 const WEBSERVER = require("./modules/webserver");
 const STATS_COLLECTION = require("./modules/statsCollection");
 const FTP_DAEMON = require("./modules/ftpDaemon");
+const SERVERS_CONTROLLER = require("./modules/serversController");
 
 const collStats = STATS_COLLECTION.collectStats();
 STATS_COLLECTION.sendStatsToServer(collStats, true);
@@ -35,3 +36,6 @@ FTP_DAEMON.startFTP();
 
 // Автоматически запустить сервера, которые были запущены при закрытии Kubek
 CONFIGURATION.autoStartServers();
+
+// Инициализация планировщиков бэкапов
+SERVERS_CONTROLLER.initSchedulers();

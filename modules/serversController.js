@@ -13,9 +13,11 @@ const {spawn} = require("node:child_process");
 const mcs = require("node-mcstatus");
 const tar = require("tar");
 const moment = require("moment");
+const schedule = require("node-schedule");
 
 global.serversInstances = {};
 global.instancesLogs = {};
+global.scheduledJobs = {};
 global.restartAttempts = {};
 global.serversToManualRestart = [];
 
@@ -283,13 +285,50 @@ exports.queryServer = (serverName, cb) => {
     }
 }
 
+// Проверка и удаление старых бэкапов
+exports.enforceBackupLimit = (serverName, type) => {
+    const serverInfo = SERVERS_MANAGER.getServerInfo(serverName);
+    if (!serverInfo || !serverInfo.backupConfig) return;
+
+    let limit = type === 'manual' ? serverInfo.backupConfig.manualLimit : serverInfo.backupConfig.autoLimit;
+    if (!limit || limit <= 0) return;
+
+    let backupDir = path.resolve("./servers/" + serverName + "/backups");
+    if (!fs.existsSync(backupDir)) return;
+
+    let prefix = type === 'manual' ? 'manual_backup_' : 'auto_backup_';
+
+    fs.readdir(backupDir, (err, files) => {
+        if (err) return;
+
+        let backups = files.filter(file => file.startsWith(prefix));
+
+        // Sort by creation time (older first)
+        backups.sort((a, b) => {
+            let statA = fs.statSync(path.join(backupDir, a));
+            let statB = fs.statSync(path.join(backupDir, b));
+            return statA.mtime.getTime() - statB.mtime.getTime();
+        });
+
+        while (backups.length > limit) {
+            let toDelete = backups.shift(); // Oldest
+            fs.unlink(path.join(backupDir, toDelete), (err) => {
+                if (!err) {
+                    this.writeServerLog(serverName, `[Backups] Deleted old backup: ${toDelete}`);
+                }
+            });
+        }
+    });
+};
+
 // Создать бэкап сервера
-exports.backupServer = (serverName) => {
+exports.backupServer = (serverName, type = 'manual') => {
     if (!SERVERS_MANAGER.isServerExists(serverName)) {
         return false;
     }
 
     let wasRunning = SERVERS_MANAGER.getServerStatus(serverName) === PREDEFINED.SERVER_STATUSES.RUNNING;
+    let prefix = type === 'manual' ? 'manual_backup_' : 'auto_backup_';
 
     const performBackup = () => {
         let spData = this.getServerProperties(serverName);
@@ -301,10 +340,10 @@ exports.backupServer = (serverName) => {
         }
 
         let timestamp = moment().format("YYYY-MM-DD_HH-mm-ss");
-        let backupFile = `manual_backup_${worldName}_${timestamp}.tar`;
+        let backupFile = `${prefix}${worldName}_${timestamp}.tar`;
         let backupPath = path.join(backupDir, backupFile);
 
-        this.writeServerLog(serverName, `[Backups] Starting backup of world '${worldName}'...`);
+        this.writeServerLog(serverName, `[Backups] Starting ${type} backup of world '${worldName}'...`);
 
         tar.create(
             {
@@ -315,6 +354,10 @@ exports.backupServer = (serverName) => {
             [worldName]
         ).then(() => {
             this.writeServerLog(serverName, `[Backups] Backup completed: ${backupFile}`);
+
+            // Check limits after successful backup
+            this.enforceBackupLimit(serverName, type);
+
             if (wasRunning) {
                 this.writeServerLog(serverName, "[Backups] Restarting server...");
                 this.startServer(serverName);
@@ -340,6 +383,60 @@ exports.backupServer = (serverName) => {
     }
 
     return true;
+};
+
+// Планирование авто-бэкапа
+exports.scheduleAutoBackup = (serverName) => {
+    // Cancel existing job
+    if (scheduledJobs[serverName]) {
+        scheduledJobs[serverName].cancel();
+        delete scheduledJobs[serverName];
+    }
+
+    const serverInfo = SERVERS_MANAGER.getServerInfo(serverName);
+    if (!serverInfo || !serverInfo.backupConfig || !serverInfo.backupConfig.autoBackup || !serverInfo.backupConfig.autoBackup.enabled) {
+        return;
+    }
+
+    const config = serverInfo.backupConfig.autoBackup;
+    const [hour, minute] = config.time.split(':');
+
+    let rule = new schedule.RecurrenceRule();
+    rule.hour = parseInt(hour);
+    rule.minute = parseInt(minute);
+
+    if (config.timezone) {
+        rule.tz = config.timezone;
+    }
+
+    if (config.frequency === 'day') {
+        // Every day at HH:MM
+    } else if (config.frequency === 'week') {
+        rule.dayOfWeek = 1; // Monday? User didn't specify day of week. Assume Monday or let default?
+        // "Every Week" usually means once a week. I'll default to Monday (1).
+        // Actually, cron syntax is simpler if node-schedule supports it fully with timezone? Yes.
+        // But RecurrenceRule is better for timezone.
+    } else if (config.frequency === 'month') {
+        rule.date = 1; // 1st of month
+    }
+
+    try {
+        scheduledJobs[serverName] = schedule.scheduleJob(rule, () => {
+            this.writeServerLog(serverName, "[Backups] Starting scheduled auto-backup...");
+            this.backupServer(serverName, 'auto');
+        });
+        this.writeServerLog(serverName, `[Backups] Scheduled auto-backup (${config.frequency} at ${config.time} ${config.timezone || 'UTC'})`);
+    } catch (e) {
+        console.error(`Failed to schedule backup for ${serverName}:`, e);
+    }
+};
+
+// Инициализация планировщиков при запуске
+exports.initSchedulers = () => {
+    const servers = SERVERS_MANAGER.getServersList();
+    servers.forEach(serverName => {
+        this.scheduleAutoBackup(serverName);
+    });
 };
 
 // DEVELOPED by seeeroy
