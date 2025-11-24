@@ -20,19 +20,39 @@ function populateTimezones() {
     const timezones = Intl.supportedValuesOf('timeZone');
     const select = $("#timezone");
 
-    // Helper to get offset string
-    const getOffset = (timeZone) => {
+    // Helper to get offset string and minutes for sorting
+    const getOffsetData = (timeZone) => {
         const date = new Date();
         const str = date.toLocaleString('en-US', { timeZone, timeZoneName: 'longOffset' });
-        const match = str.match(/GMT([+-]\d{2}:\d{2})/);
-        return match ? match[1] : "+00:00";
+        const match = str.match(/GMT([+-])(\d{2}):(\d{2})/);
+
+        if (!match) return { str: "+00:00", minutes: 0 };
+
+        const sign = match[1] === '+' ? 1 : -1;
+        const hours = parseInt(match[2]);
+        const minutes = parseInt(match[3]);
+        const totalMinutes = sign * (hours * 60 + minutes);
+
+        return { str: match[0].replace('GMT', ''), minutes: totalMinutes };
     };
 
+    let tzOptions = [];
     timezones.forEach(tz => {
         if (tz !== 'UTC') {
-            const offset = getOffset(tz);
-            select.append(new Option(`${tz} (UTC${offset})`, tz));
+            const offsetData = getOffsetData(tz);
+            tzOptions.push({
+                name: tz,
+                offsetStr: offsetData.str,
+                offsetMinutes: offsetData.minutes
+            });
         }
+    });
+
+    // Sort by offset minutes (ascending)
+    tzOptions.sort((a, b) => a.offsetMinutes - b.offsetMinutes);
+
+    tzOptions.forEach(opt => {
+        select.append(new Option(`${opt.name} (UTC${opt.offsetStr})`, opt.name));
     });
 }
 

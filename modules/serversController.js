@@ -439,7 +439,7 @@ exports.initSchedulers = () => {
     });
 };
 
-// Получить список бэкапов
+// Get list of backups
 exports.getBackupsList = (serverName) => {
     let backupDir = path.resolve("./servers/" + serverName + "/backups");
     if (!fs.existsSync(backupDir)) {
@@ -470,7 +470,7 @@ exports.getBackupsList = (serverName) => {
     }
 };
 
-// Восстановить бэкап
+// Restore a backup
 exports.restoreServer = async (serverName, filename) => {
     if (!SERVERS_MANAGER.isServerExists(serverName)) {
         return false;

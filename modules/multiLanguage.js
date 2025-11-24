@@ -1,11 +1,11 @@
-// Формат перевода в тексте: {{категория.ключ}}
+// Translation format in text: {{category.key}}
 
 const fs = require('fs');
 const path = require('path');
-// Список кодов для доступных языков
+// List of codes for available languages
 global.avaliableLanguages = {};
 
-// Загрузить список доступных языков
+// Load list of available languages
 exports.loadAvailableLanguages = () => {
     if (fs.existsSync(path.join(__dirname, "./../languages"))) {
         fs.readdirSync(path.join(__dirname, "./../languages")).forEach(file => {
@@ -21,7 +21,7 @@ exports.loadAvailableLanguages = () => {
     return false;
 };
 
-// Получить информацию о языке по названию
+// Get language info by name
 exports.getLanguageInfo = (language) => {
     if (Object.keys(avaliableLanguages).includes(language)) {
         return avaliableLanguages[language];
@@ -29,22 +29,22 @@ exports.getLanguageInfo = (language) => {
     return false;
 };
 
-// Перевести все вхождения меток переводов в текст
+// Translate all occurrences of translation labels in text
 exports.translateText = (language, text, ...placers) => {
     text = text.toString();
     if (Object.keys(avaliableLanguages).includes(language)) {
         let translationFile = JSON.parse(fs.readFileSync(path.join(__dirname, "./../languages", language + ".json")).toString());
-        // Ищем плейсхолдеры перевода по regex
+        // Search for translation placeholders using regex
         let searchMatches = text.toString().match(/\{{[0-9a-zA-Z\-_.]+\}}/gm);
         if (searchMatches != null) {
             searchMatches.forEach(match => {
-                // Чистим match-и от скобок и делим на категорию и ключ
+                // Clean matches from brackets and split into category and key
                 let matchClear = match.replaceAll("{", "").replaceAll("}", "");
                 if (matchClear.split(".").length >= 2) {
                     let category = matchClear.split(".")[0];
                     let key = matchClear.split(".")[1];
                     let modificator = matchClear.split(".")[2];
-                    // Заменяем в тексте найденные в списке переводы
+                    // Replace found translations in the text
                     if (typeof translationFile.translations[category][key] !== "undefined") {
                         let matchedTranslation = translationFile.translations[category][key];
                         if(modificator === "upperCase"){
@@ -56,7 +56,7 @@ exports.translateText = (language, text, ...placers) => {
                     }
                 }
             });
-            // Заменяем плейсхолдеры текста (%0%, %1%...) на предоставленные объекты
+            // Replace text placeholders (%0%, %1%...) with provided objects
             placers.forEach(function (replacement, i) {
                 text = text.replaceAll("%" + i + "%", replacement);
             });
@@ -66,7 +66,7 @@ exports.translateText = (language, text, ...placers) => {
     return false;
 };
 
-// Получить EULA для опр. языка
+// Get EULA for a specific language
 exports.getEULA = (language) => {
     if(this.getLanguageInfo(language) !== false){
         let translationFile = JSON.parse(fs.readFileSync("./languages/" + language + ".json").toString());

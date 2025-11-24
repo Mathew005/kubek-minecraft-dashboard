@@ -124,7 +124,7 @@ router.post("/:server/backups/config", WEBSERVER.serversRouterMiddleware, functi
     res.sendStatus(400);
 });
 
-// Router для получения списка бэкапов
+// Router for getting backup list
 router.get("/:server/backups", WEBSERVER.serversRouterMiddleware, function (req, res) {
     let q = req.params;
     if (COMMONS.isObjectsValid(q.server) && SERVERS_MANAGER.isServerExists(q.server)) {
@@ -133,7 +133,7 @@ router.get("/:server/backups", WEBSERVER.serversRouterMiddleware, function (req,
     res.sendStatus(400);
 });
 
-// Router для восстановления бэкапа
+// Router for restoring a backup
 router.post("/:server/backups/restore", WEBSERVER.serversRouterMiddleware, async function (req, res) {
     let q = req.params;
     let q2 = req.query;
