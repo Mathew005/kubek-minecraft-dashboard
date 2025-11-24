@@ -101,6 +101,29 @@ router.post("/:server/backup", WEBSERVER.serversRouterMiddleware, function (req,
     res.sendStatus(400);
 });
 
+// Router для получения конфигурации бэкапов
+router.get("/:server/backups/config", WEBSERVER.serversRouterMiddleware, function (req, res) {
+    let q = req.params;
+    if (COMMONS.isObjectsValid(q.server) && SERVERS_MANAGER.isServerExists(q.server)) {
+        const info = SERVERS_MANAGER.getServerInfo(q.server);
+        return res.send(info.backupConfig || {});
+    }
+    res.sendStatus(400);
+});
+
+// Router для сохранения конфигурации бэкапов
+router.post("/:server/backups/config", WEBSERVER.serversRouterMiddleware, function (req, res) {
+    let q = req.params;
+    let q2 = req.query;
+    if (COMMONS.isObjectsValid(q.server, q2.data) && SERVERS_MANAGER.isServerExists(q.server)) {
+        let config = JSON.parse(Base64.decode(q2.data));
+        SERVERS_MANAGER.setServerProperty(q.server, "backupConfig", config);
+        SERVERS_CONTROLLER.scheduleAutoBackup(q.server);
+        return res.send(true);
+    }
+    res.sendStatus(400);
+});
+
 // Router для принудительного завершения сервера
 router.get("/:server/kill", WEBSERVER.serversRouterMiddleware, function (req, res) {
     let q = req.params;

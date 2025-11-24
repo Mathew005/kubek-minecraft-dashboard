@@ -1,0 +1,105 @@
+<link rel="stylesheet" href="/pages/backups.css" />
+
+<div class="backups-container animate__animated animate__fadeIn animate__faster h-full" style="overflow: auto;">
+    <h2>Backups & Schedule</h2>
+
+    <!-- Limits Section -->
+    <h4>Backup Limits</h4>
+    <table>
+        <tr>
+            <td>
+                <div class="flexWrapper">
+                    <div class="iconBg">
+                        <span class="material-symbols-rounded">inventory_2</span>
+                    </div>
+                    Manual Backup Limit
+                </div>
+            </td>
+            <td>
+                <input type="number" id="manual-limit" min="1">
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <div class="flexWrapper">
+                    <div class="iconBg">
+                        <span class="material-symbols-rounded">autorenew</span>
+                    </div>
+                    Auto Backup Limit
+                </div>
+            </td>
+            <td>
+                <input type="number" id="auto-limit" min="1">
+            </td>
+        </tr>
+    </table>
+
+    <!-- Schedule Section -->
+    <h4>Auto Backup Schedule</h4>
+    <table>
+        <tr>
+            <td>
+                <div class="flexWrapper">
+                    <div class="iconBg">
+                        <span class="material-symbols-rounded">schedule</span>
+                    </div>
+                    Enable Auto Backups
+                </div>
+            </td>
+            <td>
+                <label class="switch">
+                    <input type="checkbox" id="auto-backup-enabled">
+                    <span class="slider round"></span>
+                </label>
+            </td>
+        </tr>
+        <tr class="schedule-row">
+            <td>
+                <div class="flexWrapper">
+                    <div class="iconBg">
+                        <span class="material-symbols-rounded">event_repeat</span>
+                    </div>
+                    Frequency
+                </div>
+            </td>
+            <td>
+                <select id="frequency">
+                    <option value="day">Every Day</option>
+                    <option value="week">Every Week</option>
+                    <option value="month">Every Month</option>
+                </select>
+            </td>
+        </tr>
+        <tr class="schedule-row">
+            <td>
+                <div class="flexWrapper">
+                    <div class="iconBg">
+                        <span class="material-symbols-rounded">access_time</span>
+                    </div>
+                    Time (24h)
+                </div>
+            </td>
+            <td>
+                <input type="time" id="backup-time">
+            </td>
+        </tr>
+        <tr class="schedule-row">
+            <td>
+                <div class="flexWrapper">
+                    <div class="iconBg">
+                        <span class="material-symbols-rounded">public</span>
+                    </div>
+                    Timezone
+                </div>
+            </td>
+            <td>
+                <select id="timezone">
+                    <option value="UTC">UTC</option>
+                </select>
+                <small id="local-time-hint" style="display: block; margin-top: 5px; color: var(--bg-dark-accent-lighter);"></small>
+            </td>
+        </tr>
+    </table>
+
+    <button class="primary-btn" onclick="saveBackupConfig()">Save Options</button>
+</div>
