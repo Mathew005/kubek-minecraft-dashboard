@@ -32,6 +32,8 @@ class KubekServerHeaderUI {
             $(".content-header .status .circle").removeClass("red yellow green");
             $(".content-header .hide-on-change").hide();
             $(".content-header #server-more-btn").hide();
+            $(".content-header #server-backup-btn").hide();
+
             if (status === KubekPredefined.SERVER_STATUSES.STARTING || status === KubekPredefined.SERVER_STATUSES.STOPPING) {
                 $(".content-header .status .circle").addClass("yellow");
                 $(".content-header #server-more-btn").show();
@@ -40,9 +42,11 @@ class KubekServerHeaderUI {
                 $(".content-header #server-restart-btn").show();
                 $(".content-header #server-stop-btn").show();
                 $(".content-header #server-more-btn").show();
+                $(".content-header #server-backup-btn").show();
             } else if (status === KubekPredefined.SERVER_STATUSES.STOPPED) {
                 $(".content-header .status .circle").addClass("red");
                 $(".content-header #server-start-btn").show();
+                $(".content-header #server-backup-btn").show();
             }
         } else {
             return false;

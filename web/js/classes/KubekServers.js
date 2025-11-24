@@ -61,4 +61,29 @@ class KubekServers {
             KubekRequests.get("/servers/" + server + "/stop");
         }
     };
+
+    // Запросить бэкап сервера
+    static askForBackup = (server) => {
+        if (currentServerStatus === KubekPredefined.SERVER_STATUSES.RUNNING) {
+            KubekNotifyModal.create(
+                "Backup Server",
+                "The server needs to be stopped to create a backup. Are you sure you want to stop the server and proceed with the backup?",
+                "Yes, Stop & Backup",
+                "save",
+                () => {
+                    this.backupServer(server);
+                },
+                KubekPredefined.MODAL_CANCEL_BTN
+            );
+        } else if (currentServerStatus === KubekPredefined.SERVER_STATUSES.STOPPED) {
+            this.backupServer(server);
+        }
+    };
+
+    // Выполнить бэкап сервера
+    static backupServer = (server) => {
+        KubekRequests.post("/servers/" + server + "/backup", () => {
+            KubekAlerts.addAlert("Backup process started", "save", "Backups", 5000);
+        });
+    };
 }
