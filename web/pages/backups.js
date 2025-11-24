@@ -19,9 +19,19 @@ $(function () {
 function populateTimezones() {
     const timezones = Intl.supportedValuesOf('timeZone');
     const select = $("#timezone");
+
+    // Helper to get offset string
+    const getOffset = (timeZone) => {
+        const date = new Date();
+        const str = date.toLocaleString('en-US', { timeZone, timeZoneName: 'longOffset' });
+        const match = str.match(/GMT([+-]\d{2}:\d{2})/);
+        return match ? match[1] : "+00:00";
+    };
+
     timezones.forEach(tz => {
         if (tz !== 'UTC') {
-            select.append(new Option(tz, tz));
+            const offset = getOffset(tz);
+            select.append(new Option(`${tz} (UTC${offset})`, tz));
         }
     });
 }
