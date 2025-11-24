@@ -47,7 +47,7 @@ exports.MONITOR_SERVERS_PERM_URLS = [
 ];
 
 // Базовые директории, которые необходимо создать
-exports.BASE_DIRS = ["backups", "logs", "servers", "binaries", "binaries/java"];
+exports.BASE_DIRS = ["logs", "servers", "binaries", "binaries/java"];
 
 // Базовые типы задач
 exports.TASKS_TYPES = {
