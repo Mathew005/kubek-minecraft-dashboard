@@ -11,6 +11,8 @@ const treekill = require("tree-kill");
 const spParser = require("minecraft-server-properties");
 const {spawn} = require("node:child_process");
 const mcs = require("node-mcstatus");
+const tar = require("tar");
+const moment = require("moment");
 
 global.serversInstances = {};
 global.instancesLogs = {};
@@ -280,5 +282,58 @@ exports.queryServer = (serverName, cb) => {
         cb(false);
     }
 }
+
+// Создать бэкап сервера
+exports.backupServer = (serverName) => {
+    if (!SERVERS_MANAGER.isServerExists(serverName)) {
+        return false;
+    }
+
+    const performBackup = () => {
+        let spData = this.getServerProperties(serverName);
+        let worldName = spData && spData["level-name"] ? spData["level-name"] : "world";
+        let backupDir = path.resolve("./servers/" + serverName + "/backups");
+
+        if (!fs.existsSync(backupDir)) {
+            fs.mkdirSync(backupDir, { recursive: true });
+        }
+
+        let timestamp = moment().format("YYYY-MM-DD_HH-mm-ss");
+        let backupFile = `manual_backup_${worldName}_${timestamp}.tar`;
+        let backupPath = path.join(backupDir, backupFile);
+
+        this.writeServerLog(serverName, `[Backups] Starting backup of world '${worldName}'...`);
+
+        tar.create(
+            {
+                gzip: false,
+                file: backupPath,
+                cwd: path.resolve("./servers/" + serverName)
+            },
+            [worldName]
+        ).then(() => {
+            this.writeServerLog(serverName, `[Backups] Backup completed: ${backupFile}`);
+        }).catch((err) => {
+            this.writeServerLog(serverName, `[Backups] Backup failed: ${err.message}`);
+            console.error(err);
+        });
+    };
+
+    if (SERVERS_MANAGER.getServerStatus(serverName) === PREDEFINED.SERVER_STATUSES.RUNNING) {
+        this.writeServerLog(serverName, "[Backups] Stopping server for backup...");
+        this.stopServer(serverName);
+
+        let checkInterval = setInterval(() => {
+            if (SERVERS_MANAGER.getServerStatus(serverName) === PREDEFINED.SERVER_STATUSES.STOPPED) {
+                clearInterval(checkInterval);
+                performBackup();
+            }
+        }, 1000);
+    } else {
+        performBackup();
+    }
+
+    return true;
+};
 
 // DEVELOPED by seeeroy

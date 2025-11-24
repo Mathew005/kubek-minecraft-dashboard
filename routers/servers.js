@@ -92,6 +92,15 @@ router.get("/:server/stop", WEBSERVER.serversRouterMiddleware, function (req, re
     res.sendStatus(400);
 });
 
+// Router для создания бэкапа сервера
+router.post("/:server/backup", WEBSERVER.serversRouterMiddleware, function (req, res) {
+    let q = req.params;
+    if (COMMONS.isObjectsValid(q.server) && SERVERS_MANAGER.isServerExists(q.server)) {
+        return res.send(SERVERS_CONTROLLER.backupServer(q.server));
+    }
+    res.sendStatus(400);
+});
+
 // Router для принудительного завершения сервера
 router.get("/:server/kill", WEBSERVER.serversRouterMiddleware, function (req, res) {
     let q = req.params;
