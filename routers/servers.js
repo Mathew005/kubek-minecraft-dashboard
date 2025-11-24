@@ -134,11 +134,12 @@ router.get("/:server/backups", WEBSERVER.serversRouterMiddleware, function (req,
 });
 
 // Router для восстановления бэкапа
-router.post("/:server/backups/restore", WEBSERVER.serversRouterMiddleware, function (req, res) {
+router.post("/:server/backups/restore", WEBSERVER.serversRouterMiddleware, async function (req, res) {
     let q = req.params;
     let q2 = req.query;
     if (COMMONS.isObjectsValid(q.server, q2.filename) && SERVERS_MANAGER.isServerExists(q.server)) {
-        return res.send(SERVERS_CONTROLLER.restoreServer(q.server, Base64.decode(q2.filename)));
+        let result = await SERVERS_CONTROLLER.restoreServer(q.server, Base64.decode(q2.filename));
+        return res.send(result);
     }
     res.sendStatus(400);
 });
