@@ -31,11 +31,13 @@ router.get("/all", (req, res) => {
     }
 
     JAVA_MANAGER.getDownloadableJavaVersions((online) => {
-        online.forEach((onlItem) => {
-            if(!result.kubek.includes(onlItem)){
-                result.online.push(onlItem);
-            }
-        });
+        if (online !== false && Array.isArray(online)) {
+            online.forEach((onlItem) => {
+                if (!result.kubek.includes(onlItem)) {
+                    result.online.push(onlItem);
+                }
+            });
+        }
         res.send(result);
     });
 });

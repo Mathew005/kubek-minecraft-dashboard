@@ -31,7 +31,7 @@ exports.gameVersionToJava = (version) => {
 // Получить список доступных на сервере версий Java
 exports.getDownloadableJavaVersions = (cb) => {
     COMMONS.getDataByURL(PREDEFINED.JAVA_LIST_URL, (data) => {
-        if (data !== false) {
+        if (data !== false && typeof data.available_releases !== "undefined") {
             let availReleases = data.available_releases;
             availReleases.forEach((release, i) => {
                 availReleases[i] = release.toString();
