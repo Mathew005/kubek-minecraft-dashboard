@@ -471,7 +471,7 @@ exports.getBackupsList = (serverName) => {
 };
 
 // Восстановить бэкап
-exports.restoreServer = (serverName, filename) => {
+exports.restoreServer = async (serverName, filename) => {
     if (!SERVERS_MANAGER.isServerExists(serverName)) {
         return false;
     }
@@ -483,28 +483,37 @@ exports.restoreServer = (serverName, filename) => {
     }
 
     const performRestore = () => {
-        let spData = this.getServerProperties(serverName);
-        let worldName = spData && spData["level-name"] ? spData["level-name"] : "world";
-        let worldPath = path.resolve("./servers/" + serverName + "/" + worldName);
+        return new Promise((resolve, reject) => {
+            try {
+                let spData = this.getServerProperties(serverName);
+                let worldName = spData && spData["level-name"] ? spData["level-name"] : "world";
+                let worldPath = path.resolve("./servers/" + serverName + "/" + worldName);
 
-        this.writeServerLog(serverName, `[Backups] Starting restore from ${filename}...`);
+                this.writeServerLog(serverName, `[Backups] Starting restore from ${filename}...`);
 
-        // 1. Delete existing world
-        if (fs.existsSync(worldPath)) {
-            this.writeServerLog(serverName, `[Backups] Deleting existing world '${worldName}'...`);
-            fs.rmSync(worldPath, { recursive: true, force: true });
-        }
+                // 1. Delete existing world
+                if (fs.existsSync(worldPath)) {
+                    this.writeServerLog(serverName, `[Backups] Deleting existing world '${worldName}'...`);
+                    fs.rmSync(worldPath, { recursive: true, force: true });
+                }
 
-        // 2. Untar backup
-        this.writeServerLog(serverName, `[Backups] Extracting backup...`);
-        tar.extract({
-            file: backupPath,
-            cwd: path.resolve("./servers/" + serverName)
-        }).then(() => {
-            this.writeServerLog(serverName, `[Backups] Restore completed successfully.`);
-        }).catch((err) => {
-            this.writeServerLog(serverName, `[Backups] Restore failed: ${err.message}`);
-            console.error(err);
+                // 2. Untar backup
+                this.writeServerLog(serverName, `[Backups] Extracting backup...`);
+                tar.extract({
+                    file: backupPath,
+                    cwd: path.resolve("./servers/" + serverName)
+                }).then(() => {
+                    this.writeServerLog(serverName, `[Backups] Restore completed successfully.`);
+                    resolve(true);
+                }).catch((err) => {
+                    this.writeServerLog(serverName, `[Backups] Restore failed: ${err.message}`);
+                    console.error(err);
+                    resolve(false);
+                });
+            } catch (err) {
+                console.error(err);
+                resolve(false);
+            }
         });
     };
 
@@ -513,17 +522,17 @@ exports.restoreServer = (serverName, filename) => {
         this.writeServerLog(serverName, "[Backups] Stopping server for restore...");
         this.stopServer(serverName);
 
-        let checkInterval = setInterval(() => {
-            if (SERVERS_MANAGER.getServerStatus(serverName) === PREDEFINED.SERVER_STATUSES.STOPPED) {
-                clearInterval(checkInterval);
-                performRestore();
-            }
-        }, 1000);
+        return new Promise((resolve) => {
+            let checkInterval = setInterval(() => {
+                if (SERVERS_MANAGER.getServerStatus(serverName) === PREDEFINED.SERVER_STATUSES.STOPPED) {
+                    clearInterval(checkInterval);
+                    performRestore().then(resolve);
+                }
+            }, 1000);
+        });
     } else {
-        performRestore();
+        return await performRestore();
     }
-
-    return true;
 };
 
 // DEVELOPED by seeeroy
